@@ -16,15 +16,15 @@ sns.set_context("notebook")
 
 def main(block=False):
     x_train_ND, t_train_N, x_test_ND, t_test_N = vis_utils.load_dataset(
-        data_dir="/Users/nfalicov/Documents/tufts/spr/final-project/clean/traffic_data")
-    # x_train_ND, t_train_N, x_test_ND, t_test_N = vis_utils.load_mixed_dataset(
-    #     data_dir="/Users/nfalicov/Documents/tufts/spr/final-project/clean/traffic_data")
+        data_dir="traffic_data")
+
     hypers_to_search = dict(
         order=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
         alpha=np.logspace(-8, 1, 10).tolist(),
         beta=np.logspace(-1, 1, 3 + 24).tolist(),
     )
-    # do a kfold over each order of model
+
+    # do a kfold grid search over each order of model
     order_list = hypers_to_search['order']
     highest_score = -np.inf
     best_model = -1
@@ -59,17 +59,17 @@ def main(block=False):
         predictions = best_estimator.predict(x_test_ND)
         pred_variance = best_estimator.predict_variance(x_test_ND)
 
-        # day of week
+        # Undo normalization for day of the week
         dow_std = 2.007250254034316
         dow_mean = 2.9137009516360317
         dow_orig = np.rint(x_test_ND[:, 2] * dow_std + dow_mean).astype(int)
 
-        # days since january
+        # Undo normalization for days since january
         dsj1_std = 46.70135254173618
         dsj1_mean = 107.82883587537479
         dsj1_orig = np.rint(x_test_ND[:, 1] * dsj1_std + dsj1_mean).astype(int)
 
-        # travel time
+        # Undo normalization for travel time
         tt_mean = 2682.591057228523
         tt_std = 267.21950503278794
         tt_orig = np.rint(t_test_N * tt_std + tt_mean).astype(int)
@@ -90,8 +90,6 @@ def main(block=False):
         print("Best Score:", best_score)
         print("Test Score:", test_score)
 
-        # # breakpoint() from stop departure sec
-        # # x_test_ND = departure seconds is first index
         departure_sec = x_test_ND[:, 0]
 
         # get grid with nice lines, only for a specific day in june!!!!
@@ -112,10 +110,10 @@ def main(block=False):
         t_pred_var_orig = np.rint(t_pred_var * tt_std + tt_mean).astype(int)
         t_pred_std = np.sqrt(t_pred_var_orig)
 
+        # transform departure time from seconds to hours
         plt.scatter(departure_sec[mask]/3600, tt_orig[mask], s=5,
                     alpha=0.3, color="tab:orange", label="True travel times")
-        # # plt.plot(departure_sec[mask], predictions[mask], s=5,
-        # #             alpha=0.3, color="tab:blue")
+
         plt.plot(dep_grid/3600, t_pred_orig, linewidth=2, label="MAP mean")
 
         plt.fill_between(
